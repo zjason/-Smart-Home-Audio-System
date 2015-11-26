@@ -9,6 +9,7 @@ class MainWindow(Gtk.Window):
         constructor, generates the base layout of the central control unit
         :return:
         """
+        #Set the window size and border and list box layout
         Gtk.Window.__init__(self, title="Central Control")
         self.set_default_size(400, 400)
         self.set_default_geometry
@@ -17,6 +18,7 @@ class MainWindow(Gtk.Window):
         listbox.set_selection_mode(Gtk.SelectionMode.NONE)
         self.add(listbox)
 
+        #Generates the reset label and button
         reset_row = Gtk.ListBoxRow()
         reset_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=100)
         reset_row.add(reset_box)
@@ -27,6 +29,7 @@ class MainWindow(Gtk.Window):
         reset_box.pack_start(reset_button, True, True, 0)
         listbox.add(reset_row)
 
+        #LED 1 label and the switch
         led_row1 = Gtk.ListBoxRow()
         led_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=100)
         led_row1.add(led_box)
@@ -36,6 +39,7 @@ class MainWindow(Gtk.Window):
         led_box.pack_start(led_button_room_1, True, True, 0)
         listbox.add(led_row1)
 
+        #LED 2 label and the switch
         led_row2 = Gtk.ListBoxRow()
         led_box2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=100)
         led_row2.add(led_box2)
@@ -44,16 +48,17 @@ class MainWindow(Gtk.Window):
         led_box2.pack_start(led1_label2, True, True, 0)
         led_box2.pack_start(led_button_room_2, True, True, 0)
         listbox.add(led_row2)
-
+        
+        #Song indicator bar
         song_row = Gtk.ListBoxRow()
         song_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=100)
         song_row.add(song_box)
         song_label = Gtk.Label("Song status:")
-
         song_box.pack_start(song_label, True, True, 0)
         #song_box.pack_start(led_button_room_2, True, True, 0)
         listbox.add(song_row)
 
+# Make a instence of the mainwindow class
 win = MainWindow()
 win.connect("delete-event", Gtk.main_quit)
 win.show_all()
