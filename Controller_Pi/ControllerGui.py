@@ -1,6 +1,7 @@
 #This is a controller GUI Program
-
+import socket
 from gi.repository import Gtk
+from zeroconf import *
 
 class MainWindow(Gtk.Window):
 
@@ -62,5 +63,22 @@ class MainWindow(Gtk.Window):
 win = MainWindow()
 win.connect("delete-event", Gtk.main_quit)
 win.show_all()
-Gtk.main()
+try:
+    #announcing a service to local internet (zero-config)
+    desc = {'qname': 'control_queue'}
+    info = ServiceInfo("_http._tcp.local.",
+                       "Controller_http._tcp.local.",
+                       socket.inet_aton(socket.gethostbyname(socket.gethostname())), 80, 0, 0,
+                       desc, "Controller")
+
+    zeroconf = Zeroconf()
+    print("Registration of a service, press Ctrl-C to exit...")
+    zeroconf.register_service(info)
+    Gtk.main()
+except SystemExit:
+    #Unregiste service form local network when system Exit.
+    print("Unregistering...")
+    zeroconf.unregister_service(info)
+    zeroconf.close()
+    socket.gethostbyname()
 
