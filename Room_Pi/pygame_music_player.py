@@ -1,3 +1,6 @@
+# Muzi
+#music_player version 0.2
+#normal order of playlist
 import pygame
 import time
 
@@ -12,7 +15,7 @@ playlist.append ( "Adele - Hello.ogg" )#music #2
 playlist.append ( "Chris Brown - Don't Judge Me.ogg" )#music #1
 
 
-song = playlist.pop()
+song = playlist.pop(0)#play the first added music in playlist
 print "Loading song: {}".format(song)
 pygame.mixer.music.load ( song )  # Get the first track from the playlist
 song = playlist.pop()
