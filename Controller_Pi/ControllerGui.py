@@ -1,7 +1,9 @@
 #This is a controller GUI Program
-import socket
+import socket, pika
+#Uncomment the next line to enable GUI import
 from gi.repository import Gtk
 from zeroconf import *
+
 
 class MainWindow(Gtk.Window):
 
@@ -49,7 +51,7 @@ class MainWindow(Gtk.Window):
         led_box2.pack_start(led1_label2, True, True, 0)
         led_box2.pack_start(led_button_room_2, True, True, 0)
         listbox.add(led_row2)
-        
+
         #Song indicator bar
         song_row = Gtk.ListBoxRow()
         song_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=100)
@@ -59,10 +61,35 @@ class MainWindow(Gtk.Window):
         #song_box.pack_start(led_button_room_2, True, True, 0)
         listbox.add(song_row)
 
+#--------------------------------------------------------------------------------
+
+#connect Controller GUI to RabbitMQ
+connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+channel = connection.channel()
+channel.queue_declare(queue='control_queue')#declare queue name as control_queue
+
+def on_request(ch, method, props, body):
+    n = body
+
+    print "Recive information from Room_Pi: %s"  % (n,)
+    response = n
+
+    ch.basic_publish(exchange='',
+                     routing_key=props.reply_to,
+                     properties=pika.BasicProperties(correlation_id = \
+                                                         props.correlation_id),
+                     body=str(response))
+    ch.basic_ack(delivery_tag = method.delivery_tag)
+
+channel.basic_qos(prefetch_count=1)
+channel.basic_consume(on_request, queue='control_queue')
+#--------------------------------------------------------------------------------
+
 # Make a instence of the mainwindow class
 win = MainWindow()
 win.connect("delete-event", Gtk.main_quit)
 win.show_all()
+
 try:
     #announcing a service to local internet (zero-config)
     desc = {'qname': 'control_queue'}
@@ -72,12 +99,14 @@ try:
                        desc, "Controller")
 
     zeroconf = Zeroconf()
-    print("Registration of a service, press Ctrl-C to exit...")
+    print "Registration of a service, press Ctrl-C to exit..."
     zeroconf.register_service(info)
+    start consuming message from control_queue
+    channel.start_consuming()
     Gtk.main()
 except SystemExit:
     #Unregiste service form local network when system Exit.
-    print("Unregistering...")
+    print "Unregistering..."
     zeroconf.unregister_service(info)
     zeroconf.close()
     socket.gethostbyname()

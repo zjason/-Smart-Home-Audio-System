@@ -1,6 +1,6 @@
 import pika, socket, uuid, json
 from zeroconf import *
-
+import time
 #!/usr/bin/env python
 __author__ = 'jason'
 
@@ -13,18 +13,6 @@ class Communicator(object):
         self.Controller_Connected = False
         self.Client_Command = ''
         self.Controller_Address = ''
-        #setup RabbitMQ Config
-        # self.connection = pika.BlockingConnection(pika.ConnectionParameters(
-        #         host='localhost'))
-        #
-        # self.channel = self.connection.channel()
-        #
-        # result = self.channel.queue_declare(exclusive=True)
-        # self.callback_queue = result.method.queue
-        #
-        # self.channel.basic_consume(self.on_response, no_ack=True,
-        #                            queue=self.callback_queue)
-        #when communicator initialed, it will try to connect controller pi
         self._ControllerConnect_()
 
 
@@ -58,13 +46,13 @@ class Communicator(object):
         else:
             print 'Did not found Client pi!'
 
-    def _MusicPlayerInfo_(self, cSong, cIns):
+    def _SendMusicPlayerInfo_(self, cSong, cIns):
         self.MusicInfo = {"Track": cSong, "TrackStatus": cIns}
-        self.Controller.call(json.dumps(self.MusicInfo))
+        return self.Controller.call(json.dumps(self.MusicInfo))
 
     def _LEDInfo_(self, led):
         self.LED_Status = {"LEDStatus": led}
-        self.Controller.call(json.dumps(self.LED_Status))
+        return self.Controller.call(json.dumps(self.LED_Status))
 
     def DisconnectClient(self):
         self.Client.disconnect()
@@ -113,10 +101,11 @@ class setinfo(object):
 
 #Controller pi RabbitMQ sender
 class ControllerMQ(object):
-    def __init__(self,chost):
-        self.Controll_host = chost
+    #init for local machine test
+    def __init__(self):
+        #self.Controll_host = chost
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(
-                host=self.Controll_host))
+                host='localhost'))
 
         self.channel = self.connection.channel()
 
@@ -125,6 +114,20 @@ class ControllerMQ(object):
 
         self.channel.basic_consume(self.on_response, no_ack=True,
                                    queue=self.callback_queue)
+
+    #init for multiple Pi communication 
+    # def __init__(self,chost):
+    #     self.Controll_host = chost
+    #     self.connection = pika.BlockingConnection(pika.ConnectionParameters(
+    #             host='localhost'))
+
+    #     self.channel = self.connection.channel()
+
+    #     result = self.channel.queue_declare(exclusive=True)
+    #     self.callback_queue = result.method.queue
+
+    #     self.channel.basic_consume(self.on_response, no_ack=True,
+    #                                queue=self.callback_queue)
 
     def on_response(self, ch, method, props, body):
         if self.corr_id == props.correlation_id:
@@ -180,4 +183,11 @@ class ClientMQ(object):
     def disconnect(self):
         self.connection.close()
 
+#Creat Communicator instance to test feature, only for debug propose
 communicate = Communicator()
+#Test GUI rabbitmq connection, "LED ON" should echo back from GUI.
+print "rabbitmq echo test", communicate.Controller.call("test!!!")
+time.sleep(2)
+print "GUI LED information echo back",communicate._LEDInfo_("LED ON!")
+time.sleep(2)
+print "GUI Trak information echo back", communicate._SendMusicPlayerInfo_("rocky","playing")
