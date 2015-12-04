@@ -2,45 +2,90 @@
 # (does not create a GUI frame for now)
 # Muzi
 
-import pygame
+import sys
+import pygame as pg
 
-def play_music(music_file):
-    """
-    stream music with mixer.music module in blocking manner
-    this will stream the sound from disk while playing
-    """
-    clock = pygame.time.Clock()
-    try:
-        pygame.mixer.music.load(music_file)
-        print "Music file %s loaded!" % music_file
-    except pygame.error:
-        print "File %s not found! (%s)" % (music_file, pygame.get_error())
-        return
-    pygame.mixer.music.play()
-    while pygame.mixer.music.get_busy():
-        # check if playback has finished
-        clock.tick(30)
+class music_player():
+    def __init__(self):#build a playlist and play it in order
+        print "1111111"
+        #sys.path.append('/path/to/~/Documents/Music_player/playlist/') #from another folder
+        self.play_list_END = pg.USEREVENT+1
+        file = open('playlist.txt','r') #Three sound effects I have
+        #lines = file.readlines()
+        self.play_list = []
+        for line in file :
+            self.play_list.append(line.split("\n")[0])
+            print "line in file",line
+        #file.close()
+        print "playlist",self.play_list
+        song = 0
+        self.count = 0
+        song_volume = 0.2 #default volume
+        pg.init()#init pygame
+        #pg.display.set_mode((500,500)) #menu window
+        pg.mixer.music.set_volume(song_volume)# set default volume
+        pg.mixer.music.set_endevent(self.play_list_END)#used to check song ends
+        pg.mixer.music.load(self.play_list[0])#start from the very first song
+        pg.mixer.music.play()
+
+        self.music_status = "stop" #stop pause playing
+        self.track_name = self.play_list[count] #track song name, the default is the first one in playlist
+        #check the end of a event(here i.e. song) if true then go to next track.
+        while 1:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    sys.exit()
+                elif event.type == self.play_list_END:
+                    song = (song+1)%len(self.play_list) #recycle the playlist when the last song is playing
+                    pg.mixer.music.load(self.play_list[song])
+                    pg.mixer.music.play()
 
 
-# pick a MP3 file ...
-# (if not in working folder, use full path--which is a pain)
-music_file = "Hello.mp3"
-#music_file = "Adele-Hello.mp3"
 
-# set up the mixer(needed since mp3 support is limited or sth Idk)
-freq = 44100     # audio CD quality
-bitsize = -16    # unsigned 16 bit
-channels = 2     # 1 is mono, 2 is stereo works for earphone
-buffer = 2048    # number of samples (experiment to get right sound)
-pygame.mixer.init(freq, bitsize, channels, buffer)
+    def change_volume(self,vol):
+        song_volume = vol
+        pg.mixer.music.set_volume(song_volume)
 
-# optional volume 0 to 1.0
-pygame.mixer.music.set_volume(0.75)
+    def activate_player(self,activate_command):
+        if activate_command == 'activate':
+            print"Player activated"
+            #call init_player
+            self.music_status = "playing"
+        print "Play awaiting"
 
-try:
-    play_music(music_file)
-except KeyboardInterrupt:
-    # if user hits Ctrl/C then exit
-    pygame.mixer.music.fadeout(1000)
-    pygame.mixer.music.stop()
-    raise SystemExit
+
+    def go_next(self):
+        print"Playing next song~~"
+        self.count+=1
+        self.track_name = self.play_list[self.count+1] #track the next song name
+    def pause(self):
+        """
+        Pauses the current song.
+
+        You can resume using `play`.
+        """
+        pg.mixer.music.pause()
+        self.playing = False
+
+    def stop(self):
+        #Stops the current song and goes to the beginning.
+        pg.mixer.music.stop()
+        self.playing = False
+
+    def previousSong(self):
+        #Returns to the previous song in the playlist.
+        if self.play_list:
+            self.count -= 1
+            if self.count < 0:
+                self.count = len(self.play_list) - 1
+            self.stop()
+        self.track_name = self.play_list[self.count]
+
+            #self.loadSong()
+
+
+
+
+
+l = music_player() #TEst to call this player class
