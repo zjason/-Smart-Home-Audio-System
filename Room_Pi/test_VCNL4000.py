@@ -35,10 +35,10 @@ class Detector(object):
         return self.LED
 
 try:
-    detctor = Detector()
+    detector = Detector()
     while 1:
         time.sleep(2)
-        print("LED status:"), detctor.check_led()
+        print("LED status:"), detector.check_led()
 
 except (KeyboardInterrupt):
     print "sensor closed"
