@@ -38,7 +38,7 @@ try:
     detctor = Detector()
     while 1:
         time.sleep(2)
-        print("LED status:"), room.check_led()
+        print("LED status:"), detctor.check_led()
 
 except (KeyboardInterrupt):
     print "sensor closed"
