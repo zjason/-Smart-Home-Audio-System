@@ -43,7 +43,4 @@ try:
 except (KeyboardInterrupt):
     print "sensor closed"
 
-room = Detector()
-room.check_present()
-room.check_LED()
 
