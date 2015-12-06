@@ -2,8 +2,6 @@
 
 import time
 from Adafruit_I2C import Adafruit_I2C
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
-
 
 # ===========================================================================
 # VCNL4000 Class
@@ -32,9 +30,8 @@ VCNL4000_MEASUREPROXIMITY = 0x08
 VCNL4000_AMBIENTREADY = 0x40
 VCNL4000_PROXIMITYREADY = 0x20
 
-class VCNL4000(QObject):
+class VCNL4000 :
   i2c = None
-  pro_data = pyqtSignal(int)
 
   # Constructor
   def __init__(self, address=0x13):
@@ -46,13 +43,12 @@ class VCNL4000(QObject):
     self.i2c.write8(VCNL4000_PROXINITYADJUST, 0x81);
 
   # Read data from proximity sensor
-  @pyqtSlot()
   def read_proximity(self):
     self.i2c.write8(VCNL4000_COMMAND, VCNL4000_MEASUREPROXIMITY)
     while True:
       result = self.i2c.readU8(VCNL4000_COMMAND)
-      if result and VCNL4000_PROXIMITYREADY:
-        self.pro_data.emit(self.i2c.readU16(VCNL4000_PROXIMITYDATA))
+      if (result and VCNL4000_PROXIMITYREADY):
+        return self.i2c.readU16(VCNL4000_PROXIMITYDATA)
       time.sleep(0.001)
 
 
