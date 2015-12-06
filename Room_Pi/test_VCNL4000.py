@@ -1,8 +1,11 @@
 #!/usr/bin/python
 
-from VCNL4000 import VCNL4000
+from vcnl4000 import VCNL4000
 import time
 import threading
+
+__author__ = 'icer'
+
 
 class Detector(object):
     """
