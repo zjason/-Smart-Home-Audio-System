@@ -1,47 +1,80 @@
-import pika, socket, uuid, json
+import pika, socket, uuid, json, threading
 from zeroconf import *
 import time
 #!/usr/bin/env python
 __author__ = 'jason'
 
+#HOST_IP is currently device ip
+#change HOST_IP if current device changed
+HOST_IP = '10.0.1.18'
 
 #This class will handle all the communication within the room pi.
 #It also need to handle the communication between controller pi and client pi
 class Communicator(object):
-    def __init__(self):
+    def __init__(self, roomID):
         self.Client_Connected = False
         self.Controller_Connected = False
-        self.Client_Command = ''
-        self.Controller_Address = ''
-        self._ControllerConnect_()
+        self.Controller_ip = ''
+        self.roomname = roomID
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=HOST_IP))
+        self.channel = self.connection.channel()
 
+    def _startService_(self):
+        self.desc = {'qname': 'Room1_queue'}
+        self.info = ServiceInfo("_http._tcp.local.",
+                        "Room_http._tcp.local.",
+                       socket.inet_aton(socket.gethostbyname(socket.gethostname())), 80, 0, 0,
+                       self.desc, "Room1")
 
-    #This function will try to connect Controller pi
-    def _ControllerConnect_(self):
-        print "test controller zeroconfig"
-        zeroconf = Zeroconf()
-        listener = MyListener_Controller()
-        binfo = listener.add_service(zeroconf,"_http._tcp.local.","Controller_http._tcp.local.")
-        #will use a thread to handle connection between room pi and controler pi
-        if binfo is not None:
-            print "Controller host is ", binfo.bhost
-            print "Controller proper is ", binfo.bproper
-            self.Controller = ControllerMQ()
-            self.Controller_Connected = True
-        else:
-            print 'Did not found Controller pi!'
+        self.zeroconf = Zeroconf()
+        print "Registration of a service, press Ctrl-C to exit..."
+        self.zeroconf.register_service(self.info)
+
+    def _removeService_(self):
+        #Unregiste service form local network when system Exit.
+        print "Unregistering..."
+        self.zeroconf.unregister_service(self.info)
+        self.zeroconf.close()
+        print "Room1 offline"
 
     #send music player information to Controller, cSong is tra>k name
-    def _SendMusicPlayerInfo_(self, cSong, cIns):
-        self.MusicInfo = {"Track": cSong, "TrackStatus": cIns}
-        return self.Controller.call(json.dumps(self.MusicInfo))
+    def _SendMusicPlayerInfo_(self, track, trackstatus):
+        self.MusicInfo = {'sender': 'Room', 'roomID': self.roomname, 'device': 'MusicPlyer', 'Track': track, 'TrackStatus': trackstatus}
+        print " [x] Sent 'Music Player information!'"
+        self.channel0.basic_publish(exchange='',
+                               routing_key='Control_Room_queue',
+                               body=json.dumps(self.LED_Status))
 
-    def _SendLEDInfo_(self, led):
-        self.LED_Status = {"LEDStatus": led}
-        return self.Controller.call(json.dumps(self.LED_Status))
 
-    def DisconnectClient(self):
-        self.Client.disconnect()
+    def _SendLEDInfo_(self, ledstatus):
+        self.LED_Status = {'sender': 'Room', 'roomID': self.roomname, 'device': 'LED', 'LEDStatus': ledstatus}
+        print " [x] Sent 'LED information!'"
+        self.channel0.basic_publish(exchange='',
+                               routing_key='Control_Room_queue',
+                               body=json.dumps(self.LED_Status))
+
+    def _ConnectMQ_(self):
+        #connect Room queue to RabbitMQ
+        self.channel.queue_declare(queue='Room1_queue')#declare queue name as control_queue
+        self.channel.basic_qos(prefetch_count=1)
+        self.channel.basic_consume(on_request, queue='Room1_queue')
+
+    def _ConnectController_(self):
+        print "Connect to controller using zeroconfig"
+        zeroconf = Zeroconf()
+        #if processClientMSG['target'] == 'Room1':
+        listener1 = MyListener_Controller()
+        binfo1 = listener1.add_service(zeroconf,"_http._tcp.local.","Controller_http._tcp.local.")
+        self.Controller_ip = binfo1.bhost
+        self.connection0 = pika.BlockingConnection(pika.ConnectionParameters(host=self.Controller_ip))
+        self.channel0 = self.connection0.channel()
+        self.channel0.queue_declare(queue='Control_Room_queue')
+
+
+    def _consumingThread_(self):
+        t = threading.Thread(target=self.channel.start_consuming)
+        t.daemon = True
+        t.start()
 
 
 #zero config for controller pi, this listener is a filter that only return Controller's service information
@@ -54,7 +87,7 @@ class MyListener_Controller(object):
         info = zeroconf.get_service_info(type, name)
         print info
         if info is not None:
-            #print info.get_Server()
+            print info.get_Server()
             if info.get_Server() == "Controller.":
                 bottleinfo = setinfo(str(socket.inet_ntoa(info.get_Address())),info.get_Properties())
                 return bottleinfo
@@ -65,45 +98,15 @@ class setinfo(object):
         self.bhost = bhost
         self.bproper = bproper
 
-#Controller pi RabbitMQ sender
-class ControllerMQ(object):
-    def __init__(self):
-        #self.Controll_host = chost
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(
-                host='localhost'))
+def on_request(ch, method, props, body):
+    n = body
 
-        self.channel = self.connection.channel()
+    print "Recive information from Room_Pi: %s"  % (n,)
+    response = n
 
-        result = self.channel.queue_declare(exclusive=True)
-        self.callback_queue = result.method.queue
-
-        self.channel.basic_consume(self.on_response, no_ack=True,
-                                   queue=self.callback_queue)
-
-    def on_response(self, ch, method, props, body):
-        if self.corr_id == props.correlation_id:
-            self.response = body
-
-    def call(self, n):
-        self.response = None
-        self.corr_id = str(uuid.uuid4())
-        self.channel.basic_publish(exchange='',
-                                   routing_key='control_queue',
-                                   properties=pika.BasicProperties(
-                                         reply_to = self.callback_queue,
-                                         correlation_id = self.corr_id,
-                                         ),
-                                   body=n)
-        while self.response is None:
-            self.connection.process_data_events()
-        return self.response
-
-#Creat Communicator instance to test feature, only for debug propose
-communicate = Communicator()
-#Test GUI rabbitmq connection, "LED ON" should echo back from GUI.
-print "rabbitmq echo test", communicate.Controller.call("test!!!")
-time.sleep(2)
-print "GUI LED information echo back",communicate._SendLEDInfo_("LED ON!")
-time.sleep(2)
-print "GUI Trak information echo back", communicate._SendMusicPlayerInfo_("rocky","playing")
-communicate._ClientConnect_()
+    ch.basic_publish(exchange='',
+                     routing_key=props.reply_to,
+                     properties=pika.BasicProperties(correlation_id = \
+                                                         props.correlation_id),
+                     body=str(response))
+    ch.basic_ack(delivery_tag = method.delivery_tag)

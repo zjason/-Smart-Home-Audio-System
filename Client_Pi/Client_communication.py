@@ -29,7 +29,7 @@ class Client_Communication(object):
         if binfo is not None:
             print "Controller host is ", binfo.bhost
             print "Controller proper is ", binfo.bproper
-            self.Controller = ControllerMQ()
+            self.Controller = ControllerMQ(binfo.bhost)
             self.Controller_Connected = True
         else:
             print 'Did not found Controller pi!'
@@ -42,10 +42,10 @@ class Client_Communication(object):
 
 #Controller pi RabbitMQ sender
 class ControllerMQ(object):
-    def __init__(self):
-        #self.Controll_host = chost
+    def __init__(self,chost):
+        self.Controller_host = chost
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(
-                host='localhost'))
+                host=self.Controller_host))
 
         self.channel = self.connection.channel()
 
