@@ -1,14 +1,14 @@
 from zeroconf import *
-import socket, pika, uuid
+import socket, pika, uuid, json
 
 #json format LED example {'sender': 'Client',
-#                     'username': 'jason',
-#                     'device': 'LED',
-#                     'action': 'OFF',
-#                     'target': 'Room1'}
+#                         'userID': 'jason',
+#                         'device': 'LED',
+#                         'action': 'OFF',
+#                         'target': 'Room1'}
 
 #json format MusicPlayer example {'sender': 'Client',
-#                                 'username': 'icer',
+#                                 'userID': 'icer',
 #                                 'device': 'MusicPlayer',
 #                                 'action': 'NEXT',
 #                                 'target': 'Room1'}
@@ -64,7 +64,7 @@ class ControllerMQ(object):
         self.response = None
         self.corr_id = str(uuid.uuid4())
         self.channel.basic_publish(exchange='',
-                                   routing_key='control_queue',
+                                   routing_key='Control_Client_queue',
                                    properties=pika.BasicProperties(
                                          reply_to = self.callback_queue,
                                          correlation_id = self.corr_id,
@@ -96,3 +96,11 @@ class Setinfo(object):
     def __init__(self,bhost,bproper):
         self.bhost = bhost
         self.bproper = bproper
+
+
+test = Client_Communication()
+print test.Controller.call(json.dumps({'sender': 'Client',
+                                       'userID': 'icer',
+                                       'device': 'MusicPlayer',
+                                       'action': 'NEXT',
+                                       'target': 'Room1'}))
