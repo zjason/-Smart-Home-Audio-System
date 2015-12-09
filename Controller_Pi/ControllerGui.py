@@ -1,15 +1,22 @@
 #This is a controller GUI Program
 import socket, pika, json, uuid, threading
 #Uncomment the next line to enable GUI import
-#from gi.repository import Gtk
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QThread, QPointF, QTimer
+import sys
+from PyQt5.QtWidgets import QApplication
+#from main_controller import MainController
 from zeroconf import *
 
 
 #--------------------------------------------------------------------------------
-HOST_IP = '10.0.1.18'
+HOST_IP = '172.31.174.131'
 
-class ControllerCommunication(object):
+class ControllerCommunication(QObject):
+
+    led = pyqtSignal()
+
     def __init__(self):
+        super(ControllerCommunication, self).__init__()
         self.Room1_Connected = False
         self.Room2_Connected = False
         self.currentRoom = ""
@@ -78,11 +85,15 @@ class ControllerCommunication(object):
             else:
                 print " send to target Room"
                 if processMSG['target'] == 'Room1':
-                    return test.room1.call(message)
+                    return self.room1.call(message)
                 elif processMSG['target'] == 'Room2':
-                    return test.room2.call(message)
+                    return self.room2.call(message)
         elif processMSG['sender'] == 'Room':
-            print "emit a signal to GUI"
+            if (processMSG['device'] == 'LED'):
+                print "emit a LED signal to GUI"
+                self.led.emit()
+            else:
+                print "emit a MusicPlayer signal to GUI"
             return "got message form Room"
 
     def connectControl_ClientMQ(self):
@@ -91,8 +102,19 @@ class ControllerCommunication(object):
         self.channel0 = self.connection0.channel()
         self.channel0.queue_declare(queue='Control_Client_queue')#declare queue name as control_queue
         self.channel0.basic_qos(prefetch_count=1)
-        self.channel0.basic_consume(on_request_Client, queue='Control_Client_queue')
+        self.channel0.basic_consume(self.on_request_Client, queue='Control_Client_queue')
 
+    def on_request_Client(self, ch, method, props, body):
+        n = body
+        response = ControllerCommunication.messageHandler(n)
+        print "Recive information from Room_Pi: %s"  % (n,)
+
+        ch.basic_publish(exchange='',
+                    routing_key=props.reply_to,
+                    properties=pika.BasicProperties(correlation_id = \
+                                                       props.correlation_id),
+                    body=str(response))
+        ch.basic_ack(delivery_tag = method.delivery_tag)
 
     def connectControl_RoomMQ(self):
         #connect Controller GUI to RabbitMQ
@@ -100,7 +122,12 @@ class ControllerCommunication(object):
         self.channel1 = self.connection1.channel()
         self.channel1.queue_declare(queue='Control_Room_queue')#declare queue name as control_queue
         self.channel1.basic_qos(prefetch_count=1)
-        self.channel1.basic_consume(on_request_Room, queue='Control_Room_queue',no_ack=True)
+        self.channel1.basic_consume(self.on_request_Room, queue='Control_Room_queue',no_ack=True)
+
+    def on_request_Room(self,ch, method, props, body):
+        n = body
+        print self.messageHandler(n)
+        print "Recive information from Room_Pi: %s"  % (n,)
 
     def _consumingThread_(self):
         t0 = threading.Thread(target=self.channel0.start_consuming)
@@ -167,35 +194,22 @@ class RoomMQ(object):
 
 
 
-def on_request_Client(ch, method, props, body):
-    n = body
-    response = ControllerCommunication.messageHandler(n)
-    print "Recive information from Room_Pi: %s"  % (n,)
-
-    ch.basic_publish(exchange='',
-                    routing_key=props.reply_to,
-                    properties=pika.BasicProperties(correlation_id = \
-                                                       props.correlation_id),
-                    body=str(response))
-    ch.basic_ack(delivery_tag = method.delivery_tag)
-
-
-def on_request_Room(ch, method, props, body):
-    n = body
-    #response = messageHandler(n)
-    print "Recive information from Room_Pi: %s"  % (n,)
+# def on_request_Room(ch, method, props, body):
+#     n = body
+#     print ControllerCommunication.messageHandler(n)
+#     print "Recive information from Room_Pi: %s"  % (n,)
 
 #--------------------------------------------------------------------------------
 
-
-try:
-    #create a controllerCommunication instance to send client message to Room
-    test = ControllerCommunication()
-    test._consumingThread_()
-
-except SystemExit:
-    #Unregiste service form local network when system Exit.
-    test.removeControlService()
+#
+# try:
+#     #create a controllerCommunication instance to send client message to Room
+#     #test = ControllerCommunication()
+#     test._consumingThread_()
+#
+# except SystemExit:
+#     #Unregiste service form local network when system Exit.
+#     test.removeControlService()
 
 
 

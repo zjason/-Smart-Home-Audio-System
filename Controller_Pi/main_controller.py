@@ -13,8 +13,14 @@ class MainController(QObject):
         super(MainController, self).__init__()
         self.mainWidget = MainWidget()
         self.ControllerCommunication = ControllerCommunication()
-        self.ControllerCommunication.led
+        self.ControllerCommunication._consumingThread_()
+        self.ControllerCommunication.led.connect(self.changeText)
 
+
+
+    @pyqtSlot()
+    def changeText(self):
+        self.mainWidget.ui.pushButton.setText("!!!!")
 
 
     def start(self):
