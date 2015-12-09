@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="106778a9-42cf-4d27-8509-17f903d5d038" name="Default" comment="" />
+    <list default="true" id="106778a9-42cf-4d27-8509-17f903d5d038" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+    </list>
     <ignored path="Smart-Home-Audio-System.iws" />
     <ignored path=".idea/workspace.xml" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -46,8 +48,8 @@
       <file leaf-file-name="ControllerGui.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Controller_Pi/ControllerGui.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-1.8169014">
-              <caret line="99" column="0" selection-start-line="99" selection-start-column="0" selection-end-line="99" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.46948355">
+              <caret line="82" column="51" selection-start-line="82" selection-start-column="51" selection-end-line="82" selection-end-column="51" />
               <folding />
             </state>
           </provider>
@@ -141,8 +143,8 @@
         <option value="$PROJECT_DIR$/Room_Pi/vcnl4000.py" />
         <option value="$PROJECT_DIR$/Room_Pi/Communicator.py" />
         <option value="/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/zeroconf.py" />
-        <option value="$PROJECT_DIR$/Controller_Pi/ControllerGui.py" />
         <option value="$PROJECT_DIR$/Controller_Pi/main_controller.py" />
+        <option value="$PROJECT_DIR$/Controller_Pi/ControllerGui.py" />
       </list>
     </option>
   </component>
@@ -649,8 +651,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Controller_Pi/ControllerGui.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-1.8169014">
-          <caret line="99" column="0" selection-start-line="99" selection-start-column="0" selection-end-line="99" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.46948355">
+          <caret line="82" column="51" selection-start-line="82" selection-start-column="51" selection-end-line="82" selection-end-column="51" />
           <folding />
         </state>
       </provider>
