@@ -1,4 +1,5 @@
 from Communicator import *
+from test_VCNL4000 import *
 
 #main function, currently for test purpose
 def main():
@@ -10,9 +11,16 @@ def main():
         time.sleep(5)
         communicate._ConnectController_()
         communicate._consumingThread_()
-        time.sleep(10)
-        communicate._SendLEDInfo_('OFF')
-        time.sleep(20)
+        sensor = Detector()
+        sensorTemp = sensor.check_led()
+        while 1:
+            time.sleep(1)
+            if sensor.check_led() != sensorTemp:
+                sensorTemp = sensor.check_led()
+                if sensor.check_led() == True:
+                    communicate._SendLEDInfo_('ON')
+                else:
+                    communicate._SendLEDInfo_('OFF')
     except (KeyboardInterrupt, SystemExit):
         communicate._removeService_()
 
