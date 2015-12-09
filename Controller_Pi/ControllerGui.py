@@ -1,28 +1,40 @@
 #This is a controller GUI Program
 import socket, pika, json, uuid, threading
 #Uncomment the next line to enable GUI import
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QThread, QPointF, QTimer
+#from gi.repository import Gtk
 from zeroconf import *
-import sys
-from PyQt5.QtWidgets import QApplication
-from main_controller import MainController
 
 
 #--------------------------------------------------------------------------------
-#change HOST_IP to current device IP
-HOST_IP = '172.31.174.131'
+HOST_IP = '10.0.1.18'
 
-led = pyqtSignal()
-
-class ControllerCommunication(QObject):
-
-
+class ControllerCommunication(object):
     def __init__(self):
-        super(ControllerCommunication, self).__init__()
         self.Room1_Connected = False
         self.Room2_Connected = False
         self.currentRoom = ""
+        self.startControlService()
+        self.connectControl_ClientMQ()
+        self.connectControl_RoomMQ()
         self.connect_room()
+
+    def startControlService(self):
+        #announcing a service to local internet (zero-config)
+        desc = {'qname': 'control_queue'}
+        self.info = ServiceInfo("_http._tcp.local.",
+                       "Controller_http._tcp.local.",
+                       socket.inet_aton(socket.gethostbyname(socket.gethostname())), 80, 0, 0,
+                       desc, "Controller")
+
+        self.zeroconf = Zeroconf()
+        self.zeroconf.register_service(self.info)
+        print "Registration of a service, press Ctrl-C to exit..."
+
+    def removeControlService(self):
+        #Unregiste service form local network when system Exit.
+        print "Unregistering..."
+        self.zeroconf.unregister_service(self.info)
+        self.zeroconf.close()
 
     def connect_room(self):
         print "test Room zeroconfig"
@@ -56,6 +68,47 @@ class ControllerCommunication(QObject):
         else:
             print 'Did not found Room2 pi!'
 
+    #This function will handle all the message analysis
+    def messageHandler(self,message):
+        processMSG = json.loads(message)
+        if processMSG['sender'] == 'Client':
+            print "send message to Room"
+            if processMSG['target'] == '':
+                print " send to current Room"
+            else:
+                print " send to target Room"
+                if processMSG['target'] == 'Room1':
+                    return test.room1.call(message)
+                elif processMSG['target'] == 'Room2':
+                    return test.room2.call(message)
+        elif processMSG['sender'] == 'Room':
+            print "emit a signal to GUI"
+            return "got message form Room"
+
+    def connectControl_ClientMQ(self):
+        #connect Controller GUI to RabbitMQ
+        self.connection0 = pika.BlockingConnection(pika.ConnectionParameters(host=HOST_IP))
+        self.channel0 = self.connection0.channel()
+        self.channel0.queue_declare(queue='Control_Client_queue')#declare queue name as control_queue
+        self.channel0.basic_qos(prefetch_count=1)
+        self.channel0.basic_consume(on_request_Client, queue='Control_Client_queue')
+
+
+    def connectControl_RoomMQ(self):
+        #connect Controller GUI to RabbitMQ
+        self.connection1 = pika.BlockingConnection(pika.ConnectionParameters(host=HOST_IP))
+        self.channel1 = self.connection1.channel()
+        self.channel1.queue_declare(queue='Control_Room_queue')#declare queue name as control_queue
+        self.channel1.basic_qos(prefetch_count=1)
+        self.channel1.basic_consume(on_request_Room, queue='Control_Room_queue',no_ack=True)
+
+    def _consumingThread_(self):
+        t0 = threading.Thread(target=self.channel0.start_consuming)
+        t0.daemon = True
+        t0.start()
+        t1 = threading.Thread(target=self.channel1.start_consuming)
+        t1.daemon = True
+        t1.start()
 
 #zero config for controller pi, this listener is a filter that only return Controller's service information
 class MyListener_Room(object):
@@ -112,36 +165,11 @@ class RoomMQ(object):
             self.connection.process_data_events()
         return self.response
 
-#--------------------------------------------------------------------------------
-#This function will handle all the message analysis
-def messageHandler(message):
-    processMSG = json.loads(message)
-    if processMSG['sender'] == 'Client':
-        print "send message to Room"
-        if processMSG['target'] == '':
-            print " send to current Room"
-        else:
-            print " send to target Room"
-            if processMSG['target'] == 'Room1':
-                return test.room1.call(message)
-            elif processMSG['target'] == 'Room2':
-                return test.room2.call(message)
-    elif processMSG['sender'] == 'Room':
-        led.emit()
-        print "emit a signal to GUI"
-        return "got message form Room"
 
 
-#--------------------------------------------------------------------------------
-#connect Controller GUI to RabbitMQ
-connection0 = pika.BlockingConnection(pika.ConnectionParameters(host=HOST_IP))
-channel0 = connection0.channel()
-channel0.queue_declare(queue='Control_Client_queue')#declare queue name as control_queue
-
-def on_request(ch, method, props, body):
+def on_request_Client(ch, method, props, body):
     n = body
-    response = messageHandler(n)
-
+    response = ControllerCommunication.messageHandler(n)
     print "Recive information from Room_Pi: %s"  % (n,)
 
     ch.basic_publish(exchange='',
@@ -151,65 +179,23 @@ def on_request(ch, method, props, body):
                     body=str(response))
     ch.basic_ack(delivery_tag = method.delivery_tag)
 
-channel0.basic_qos(prefetch_count=1)
-channel0.basic_consume(on_request, queue='Control_Client_queue')
 
-#--------------------------------------------------------------------------------
-#connect Controller GUI to RabbitMQ
-connection1 = pika.BlockingConnection(pika.ConnectionParameters(host=HOST_IP))
-channel1 = connection1.channel()
-channel1.queue_declare(queue='Control_Room_queue')#declare queue name as control_queue
-
-def on_request(ch, method, props, body):
+def on_request_Room(ch, method, props, body):
     n = body
     #response = messageHandler(n)
     print "Recive information from Room_Pi: %s"  % (n,)
 
-    #print "no reply queue", response
-
-
-channel1.basic_qos(prefetch_count=1)
-channel1.basic_consume(on_request, queue='Control_Room_queue',no_ack=True)
 #--------------------------------------------------------------------------------
 
-# Make a instence of the mainwindow class
-# win = MainWindow()
-# win.connect("delete-event", Gtk.main_quit)
-# win.show_all()
 
-if __name__ == '__main__':
-
-    try:
-    #announcing a service to local internet (zero-config)
-        desc = {'qname': 'control_queue'}
-        info = ServiceInfo("_http._tcp.local.",
-                       "Controller_http._tcp.local.",
-                       socket.inet_aton(socket.gethostbyname(socket.gethostname())), 80, 0, 0,
-                       desc, "Controller")
-
-        zeroconf = Zeroconf()
-        print "Registration of a service, press Ctrl-C to exit..."
-        zeroconf.register_service(info)
+try:
     #create a controllerCommunication instance to send client message to Room
-        test = ControllerCommunication()
-    # start consuming message from control_queue
-        print 'start thread1'
-    #channel0.start_consuming
-        t0 = threading.Thread(target=channel0.start_consuming)
-        t0.daemon = True
-        t0.start()
-        print 'did not block'
-        t1 = threading.Thread(target=channel1.start_consuming)
-        t1.daemon = True
-        t1.start()
-        # channel1.start_consuming()
-        a = QApplication(sys.argv)
-        w = MainController()
-        w.start()
-        sys.exit(a.exec_())
-    except SystemExit:
+    test = ControllerCommunication()
+    test._consumingThread_()
+
+except SystemExit:
     #Unregiste service form local network when system Exit.
-        print "Unregistering..."
-        zeroconf.unregister_service(info)
-        zeroconf.close()
+    test.removeControlService()
+
+
 
