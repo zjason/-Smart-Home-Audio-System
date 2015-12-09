@@ -6,7 +6,7 @@ __author__ = 'jason'
 
 #HOST_IP is currently device ip
 #change HOST_IP if current device changed
-HOST_IP = '10.0.1.18'
+HOST_IP = '172.31.174.131'
 
 #This class will handle all the communication within the room pi.
 #It also need to handle the communication between controller pi and client pi

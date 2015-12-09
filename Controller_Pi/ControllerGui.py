@@ -1,72 +1,24 @@
 #This is a controller GUI Program
 import socket, pika, json, uuid, threading
 #Uncomment the next line to enable GUI import
-#from gi.repository import Gtk
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QThread, QPointF, QTimer
 from zeroconf import *
+import sys
+from PyQt5.QtWidgets import QApplication
+from main_controller import MainController
 
-
-# class MainWindow(Gtk.Window):
-#
-#     def __init__(self):
-#         """
-#         constructor, generates the base layout of the central control unit
-#         :return:
-#         """
-#         #Set the window size and border and list box layout
-#         Gtk.Window.__init__(self, title="Central Control")
-#         self.set_default_size(400, 400)
-#         self.set_default_geometry
-#         self.set_border_width(10)
-#         listbox = Gtk.ListBox()
-#         listbox.set_selection_mode(Gtk.SelectionMode.NONE)
-#         self.add(listbox)
-#
-#         #Generates the reset label and button
-#         reset_row = Gtk.ListBoxRow()
-#         reset_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=100)
-#         reset_row.add(reset_box)
-#         reset_label = Gtk.Label("Reset the whole system")
-#         reset_label.set_markup("<big>Reset the whole system</big>")
-#         reset_button = Gtk.Button("Reset")
-#         reset_box.pack_start(reset_label, True, True, 0)
-#         reset_box.pack_start(reset_button, True, True, 0)
-#         listbox.add(reset_row)
-#
-#         #LED 1 label and the switch
-#         led_row1 = Gtk.ListBoxRow()
-#         led_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=100)
-#         led_row1.add(led_box)
-#         led1_label = Gtk.Label("Room 1 LED Status")
-#         led_button_room_1 = Gtk.Switch()
-#         led_box.pack_start(led1_label, True, True, 0)
-#         led_box.pack_start(led_button_room_1, True, True, 0)
-#         listbox.add(led_row1)
-#
-#         #LED 2 label and the switch
-#         led_row2 = Gtk.ListBoxRow()
-#         led_box2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=100)
-#         led_row2.add(led_box2)
-#         led1_label2 = Gtk.Label("Room 2 LED Status")
-#         led_button_room_2 = Gtk.Switch()
-#         led_box2.pack_start(led1_label2, True, True, 0)
-#         led_box2.pack_start(led_button_room_2, True, True, 0)
-#         listbox.add(led_row2)
-#
-#         #Song indicator bar
-#         song_row = Gtk.ListBoxRow()
-#         song_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=100)
-#         song_row.add(song_box)
-#         song_label = Gtk.Label("Song status:")
-#         song_box.pack_start(song_label, True, True, 0)
-#         #song_box.pack_start(led_button_room_2, True, True, 0)
-#         listbox.add(song_row)
 
 #--------------------------------------------------------------------------------
 #change HOST_IP to current device IP
-HOST_IP = '10.0.1.18'
+HOST_IP = '172.31.174.131'
 
-class ControllerCommunication(object):
+led = pyqtSignal()
+
+class ControllerCommunication(QObject):
+
+
     def __init__(self):
+        super(ControllerCommunication, self).__init__()
         self.Room1_Connected = False
         self.Room2_Connected = False
         self.currentRoom = ""
@@ -175,8 +127,9 @@ def messageHandler(message):
             elif processMSG['target'] == 'Room2':
                 return test.room2.call(message)
     elif processMSG['sender'] == 'Room':
-        return "got message form Room"
+        led.emit()
         print "emit a signal to GUI"
+        return "got message form Room"
 
 
 #--------------------------------------------------------------------------------
@@ -188,6 +141,7 @@ channel0.queue_declare(queue='Control_Client_queue')#declare queue name as contr
 def on_request(ch, method, props, body):
     n = body
     response = messageHandler(n)
+
     print "Recive information from Room_Pi: %s"  % (n,)
 
     ch.basic_publish(exchange='',
@@ -223,31 +177,39 @@ channel1.basic_consume(on_request, queue='Control_Room_queue',no_ack=True)
 # win.connect("delete-event", Gtk.main_quit)
 # win.show_all()
 
-try:
+if __name__ == '__main__':
+
+    try:
     #announcing a service to local internet (zero-config)
-    desc = {'qname': 'control_queue'}
-    info = ServiceInfo("_http._tcp.local.",
+        desc = {'qname': 'control_queue'}
+        info = ServiceInfo("_http._tcp.local.",
                        "Controller_http._tcp.local.",
                        socket.inet_aton(socket.gethostbyname(socket.gethostname())), 80, 0, 0,
                        desc, "Controller")
 
-    zeroconf = Zeroconf()
-    print "Registration of a service, press Ctrl-C to exit..."
-    zeroconf.register_service(info)
+        zeroconf = Zeroconf()
+        print "Registration of a service, press Ctrl-C to exit..."
+        zeroconf.register_service(info)
     #create a controllerCommunication instance to send client message to Room
-    test = ControllerCommunication()
+        test = ControllerCommunication()
     # start consuming message from control_queue
-    print 'start thread1'
+        print 'start thread1'
     #channel0.start_consuming
-    t0 = threading.Thread(target=channel0.start_consuming)
-    t0.daemon = True
-    t0.start()
-    print 'did not block'
-    channel1.start_consuming()
-    # Gtk.main()
-except SystemExit:
+        t0 = threading.Thread(target=channel0.start_consuming)
+        t0.daemon = True
+        t0.start()
+        print 'did not block'
+        t1 = threading.Thread(target=channel1.start_consuming)
+        t1.daemon = True
+        t1.start()
+        # channel1.start_consuming()
+        a = QApplication(sys.argv)
+        w = MainController()
+        w.start()
+        sys.exit(a.exec_())
+    except SystemExit:
     #Unregiste service form local network when system Exit.
-    print "Unregistering..."
-    zeroconf.unregister_service(info)
-    zeroconf.close()
+        print "Unregistering..."
+        zeroconf.unregister_service(info)
+        zeroconf.close()
 
