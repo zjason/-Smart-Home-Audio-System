@@ -13,7 +13,7 @@ class MainController(QObject):
         super(MainController, self).__init__()
         self.mainWidget = MainWidget()
         self.ControllerCommunication = ControllerCommunication()
-        self.ControllerCommunication.led.
+        self.ControllerCommunication.led
 
 
 
