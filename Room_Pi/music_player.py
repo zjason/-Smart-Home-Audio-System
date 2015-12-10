@@ -152,35 +152,35 @@ class music_player():
 
 
 #
-if __name__=="__main__":
-    # main()
-    music_test = music_player() #Test to call this player class
-    while 1:
-        time.sleep(10)
-        print 'Pause!!!!!'
-        music_test.pause()
-        time.sleep(3)
-        print 'next song'
-        music_test.go_next()
-        time.sleep(8)
-        print 'pause!!!!'
-        music_test.pause()
-        time.sleep(8)
-        print 'pervious song!!!!'
-        music_test.previousSong()
-        time.sleep(5)
-        print 'un_pause!!!!'
-        music_test.un_pause()
-        time.sleep(4)
-        print 'next song!!!!'
-        music_test.go_next()
-        time.sleep(2)
-        print 'volume up!!!!'
-        music_test.raise_volume()
-        time.sleep(10)
-        print 'volume down!!!'
-        music_test.decrease_volude()
-        time.sleep(10)
+#if __name__=="__main__":
+ #   # main()
+  #  music_test = music_player() #Test to call this player class
+   # while 1:
+    #    time.sleep(10)
+     #   print 'Pause!!!!!'
+      #  music_test.pause()
+       # time.sleep(3)
+        #print 'next song'
+#        music_test.go_next()
+ #       time.sleep(8)
+  #      print 'pause!!!!'
+   #     music_test.pause()
+    #    time.sleep(8)
+     #   print 'pervious song!!!!'
+      #  music_test.previousSong()
+       # time.sleep(5)
+#        print 'un_pause!!!!'
+ #       music_test.un_pause()
+  #      time.sleep(4)
+   #     print 'next song!!!!'
+    #    music_test.go_next()
+     #   time.sleep(2)
+      #  print 'volume up!!!!'
+       # music_test.raise_volume()
+        #time.sleep(10)
+        #print 'volume down!!!'
+        #music_test.decrease_volude()
+        #time.sleep(10)
 
 #
 #
