@@ -21,18 +21,18 @@ class Client_Communication(object):
 
     #This function will try to connect Controller pi
     def _ControllerConnect_(self):
-        print "test controller zeroconfig"
-        zeroconf = Zeroconf()
-        listener = MyListener_Controller()
-        binfo = listener.add_service(zeroconf,"_http._tcp.local.","Controller_http._tcp.local.")
-        #will use a thread to handle connection between room pi and controler pi
-        if binfo is not None:
-            print "Controller host is ", binfo.bhost
-            print "Controller proper is ", binfo.bproper
-            self.Controller = ControllerMQ(binfo.bhost)
+        # print "test controller zeroconfig"
+        # zeroconf = Zeroconf()
+        # listener = MyListener_Controller()
+        # binfo = listener.add_service(zeroconf,"_http._tcp.local.","Controller_http._tcp.local.")
+        # #will use a thread to handle connection between room pi and controler pi
+        # if binfo is not None:
+        #     print "Controller host is ", binfo.bhost
+        #     print "Controller proper is ", binfo.bproper
+            self.Controller = ControllerMQ('172.31.174.131')#binfo.bhost)
             self.Controller_Connected = True
-        else:
-            print 'Did not found Controller pi!'
+        # else:
+        #     print 'Did not found Controller pi!'
 
     #call this function to send json formatted voice command to Controller
     def _SendVoiceCommand_(self, voicecommand):
@@ -102,5 +102,5 @@ test = Client_Communication()
 print test.Controller.call(json.dumps({'sender': 'Client',
                                        'userID': 'icer',
                                        'device': 'MusicPlayer',
-                                       'action': 'NEXT',
-                                       'target': 'Room1'}))
+                                       'action': 'PLAY',
+                                       'target': ''}))

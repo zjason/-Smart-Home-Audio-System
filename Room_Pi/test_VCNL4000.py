@@ -17,6 +17,7 @@ class Detector(object):
     # initiating sensor and reading thread
     def __init__(self):
         self.LED = False
+        self.LEDAction = False
         self.vcnl = VCNL4000(0x13)
         t = threading.Thread(target=self.check_present)
         t.daemon = True
@@ -26,13 +27,22 @@ class Detector(object):
     def check_present(self):
         while True:
             if self.vcnl.read_proximity() > 10000:
-                print "Present !!!!"
-                self.LED = True
+                if self.LEDAction == False:
+                    print "Present !!!!"
+                    self.LED = True
                 time.sleep(0.1)
             else:
-                print "No one"
-                self.LED = False
+                if self.LEDAction == False:
+                    print "No one"
+                    self.LED = False
                 time.sleep(0.1)
+
+    def control_LED(self, status):
+        self.LEDAction = True
+        if status == 'ON':
+            self.LED = True
+        else:
+            self.LED = False
 
     def check_led(self):
         return self.LED

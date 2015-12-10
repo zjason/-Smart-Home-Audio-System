@@ -18,9 +18,9 @@ class MainController(QObject):
 
 
 
-    @pyqtSlot()
-    def changeText(self):
-        self.mainWidget.ui.pushButton.setText("!!!!")
+    @pyqtSlot(str)
+    def changeText(self, ledstatus):
+        self.mainWidget.ui.pushButton.setText(ledstatus)
 
 
     def start(self):

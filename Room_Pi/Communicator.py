@@ -1,4 +1,5 @@
 import pika, socket, uuid, json, threading
+from test_VCNL4000 import *
 from zeroconf import *
 import time
 #!/usr/bin/env python
@@ -6,17 +7,20 @@ __author__ = 'jason'
 
 #HOST_IP is currently device ip
 #change HOST_IP if current device changed
-HOST_IP = '172.31.174.131'
+Room_IP = '172.31.174.131'
+Controller_IP = '172.31.174.131'
 
 #This class will handle all the communication within the room pi.
 #It also need to handle the communication between controller pi and client pi
 class Communicator(object):
-    def __init__(self, roomID):
+    def __init__(self, roomID, LED, mplayer):
         self.Client_Connected = False
         self.Controller_Connected = False
-        self.Controller_ip = ''
+        #self.Controller_ip = ''
         self.roomname = roomID
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=HOST_IP))
+        self.LED_Control = LED
+        self.MusicPlayer = mplayer
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=Controller_IP))
         self.channel = self.connection.channel()
 
     def _startService_(self):
@@ -65,11 +69,40 @@ class Communicator(object):
         #if processClientMSG['target'] == 'Room1':
         listener1 = MyListener_Controller()
         binfo1 = listener1.add_service(zeroconf,"_http._tcp.local.","Controller_http._tcp.local.")
-        self.Controller_ip = binfo1.bhost
-        self.connection0 = pika.BlockingConnection(pika.ConnectionParameters(host=self.Controller_ip))
-        self.channel0 = self.connection0.channel()
-        self.channel0.queue_declare(queue='Control_Room_queue')
+        if binfo1 is not None:
+            self.Controller_ip = binfo1.bhost
+            self.connection0 = pika.BlockingConnection(pika.ConnectionParameters(host=Controller_IP))
+            self.channel0 = self.connection0.channel()
+            self.channel0.queue_declare(queue='Control_Room_queue')
+        else:
+            print 'no Controller found!'
 
+    def _RoomMSGRecive_(self, RoomMSG):
+        roommsg = json.loads(RoomMSG)
+        if roommsg['device'] == 'MusicPlayer':
+            print "Commad for Music Player"
+            if roommsg['action'] == 'PLAY':
+                self.MusicPlayer.activate_player()
+        elif roommsg['device'] == 'LED':
+            if roommsg['action'] == 'ON':
+                print 'Turn LED ON'
+                self.LED_Control.control_LED('ON')
+            else:
+                self.LED_Control.control_LED('OFF')
+                print 'Turn LED OFF'
+
+    def on_request(self, ch, method, props, body):
+        n = body
+        print "Recive information from Room_Pi: %s"  % (n,)
+        self._RoomMSGRecive_(n)
+        response = n
+
+        ch.basic_publish(exchange='',
+                     routing_key=props.reply_to,
+                     properties=pika.BasicProperties(correlation_id = \
+                                                         props.correlation_id),
+                     body=str(response))
+        ch.basic_ack(delivery_tag = method.delivery_tag)
 
     def _consumingThread_(self):
         t = threading.Thread(target=self.channel.start_consuming)

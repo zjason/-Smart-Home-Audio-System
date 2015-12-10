@@ -13,14 +13,14 @@ HOST_IP = '172.31.174.131'
 
 class ControllerCommunication(QObject):
 
-    led = pyqtSignal()
+    led = pyqtSignal(str)
 
     def __init__(self):
         super(ControllerCommunication, self).__init__()
         self.Room1_Connected = False
         self.Room2_Connected = False
         self.currentRoom = ""
-        self.startControlService()
+        #self.startControlService()
         self.connectControl_ClientMQ()
         self.connectControl_RoomMQ()
         self.connect_room()
@@ -46,34 +46,36 @@ class ControllerCommunication(QObject):
     def connect_room(self):
         print "test Room zeroconfig"
         zeroconf = Zeroconf()
-        #if processClientMSG['target'] == 'Room1':
-        listener1 = MyListener_Room('Room1')
-        binfo1 = listener1.add_service(zeroconf,"_http._tcp.local.","Room_http._tcp.local.")
-        #connect room1
-        if binfo1 is not None:
-                # print "Controller host is ", binfo1.bhost
-                # print "Controller proper is ", binfo1.bproper
-                #self.room1 = RoomMQ(binfo1.bhost, binfo1.bproper)
-            self.room1 = RoomMQ(binfo1.bhost)
-            self.Room1_Connected = True
-            print 'room1 connected:', self.Room1_Connected
-                #print 'message received from Room1',self.room1.call(clientmsg)
-        else:
-            print 'Did not found Room1 pi!'
+        self.room1 = RoomMQ('172.30.39.27')
+        self.Room1_Connected = True
+        print 'room1 connected:', self.Room1_Connected
+        # listener1 = MyListener_Room('Room1')
+        # binfo1 = listener1.add_service(zeroconf,"_http._tcp.local.","Room_http._tcp.local.")
+        # #connect room1
+        # if binfo1 is not None:
+        #         # print "Controller host is ", binfo1.bhost
+        #         # print "Controller proper is ", binfo1.bproper
+        #         #self.room1 = RoomMQ(binfo1.bhost, binfo1.bproper)
+        #     self.room1 = RoomMQ(binfo1.bhost)
+        #     self.Room1_Connected = True
+        #     print 'room1 connected:', self.Room1_Connected
+        #         #print 'message received from Room1',self.room1.call(clientmsg)
+        # else:
+        #     print 'Did not found Room1 pi!'
         #elif processClientMSG['target'] == 'Room2':
-        listener2 = MyListener_Room('Room2')
-        binfo2 = listener2.add_service(zeroconf,"_http._tcp.local.","Room_http._tcp.local.")
-        #connect room2
-        if binfo2 is not None:
-                # print "Controller host is ", binfo2.bhost
-                # print "Controller proper is ", binfo2.bproper
-                #self.room2 = RoomMQ(binfo2.bhost, binfo2.bproper)
-            self.room2 = RoomMQ(binfo2.bhost)
-            self.Room2_Connected = True
-            print 'Room2 connected:', self.Room2_Connected
-            #print 'message received from Room2',self.room2.call(clientmsg)
-        else:
-            print 'Did not found Room2 pi!'
+        # listener2 = MyListener_Room('Room2')
+        # binfo2 = listener2.add_service(zeroconf,"_http._tcp.local.","Room_http._tcp.local.")
+        # #connect room2
+        # if binfo2 is not None:
+        #         # print "Controller host is ", binfo2.bhost
+        #         # print "Controller proper is ", binfo2.bproper
+        #         #self.room2 = RoomMQ(binfo2.bhost, binfo2.bproper)
+        #     self.room2 = RoomMQ(binfo2.bhost)
+        #     self.Room2_Connected = True
+        #     print 'Room2 connected:', self.Room2_Connected
+        #     #print 'message received from Room2',self.room2.call(clientmsg)
+        # else:
+        #     print 'Did not found Room2 pi!'
 
     #This function will handle all the message analysis
     def messageHandler(self,message):
@@ -82,6 +84,12 @@ class ControllerCommunication(QObject):
             print "send message to Room"
             if processMSG['target'] == '':
                 print " send to current Room"
+                self.room1.call(message)
+                return 'already send message to current Room'
+                # if self.currentRoom == 'Room1':
+                #     self.room1.call(message)
+                # elif self.currentRoom == 'Room2':
+                #     self.room2.call(message)
             else:
                 print " send to target Room"
                 if processMSG['target'] == 'Room1':
@@ -91,7 +99,12 @@ class ControllerCommunication(QObject):
         elif processMSG['sender'] == 'Room':
             if (processMSG['device'] == 'LED'):
                 print "emit a LED signal to GUI"
-                self.led.emit()
+                if(processMSG['LEDStatus'] == 'ON'):
+                    self.currentRoom = 'Room1'
+                    self.led.emit(str('ON'))
+                else:
+                    self.currentRoom = ''
+                    self.led.emit(str('OFF'))
             else:
                 print "emit a MusicPlayer signal to GUI"
             return "got message form Room"
@@ -106,7 +119,7 @@ class ControllerCommunication(QObject):
 
     def on_request_Client(self, ch, method, props, body):
         n = body
-        response = ControllerCommunication.messageHandler(n)
+        response = self.messageHandler(n)
         print "Recive information from Room_Pi: %s"  % (n,)
 
         ch.basic_publish(exchange='',
