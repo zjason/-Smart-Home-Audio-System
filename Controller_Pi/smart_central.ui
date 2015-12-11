@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>814</width>
-    <height>479</height>
+    <width>800</width>
+    <height>480</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -22,15 +22,17 @@
   <widget class="QGroupBox" name="groupBox_3">
    <property name="geometry">
     <rect>
-     <x>600</x>
-     <y>40</y>
+     <x>590</x>
+     <y>10</y>
      <width>191</width>
-     <height>211</height>
+     <height>241</height>
     </rect>
    </property>
    <property name="font">
     <font>
      <pointsize>20</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
     </font>
    </property>
    <property name="title">
@@ -41,7 +43,7 @@
      <rect>
       <x>0</x>
       <y>40</y>
-      <width>190</width>
+      <width>191</width>
       <height>50</height>
      </rect>
     </property>
@@ -59,7 +61,7 @@
      <rect>
       <x>0</x>
       <y>100</y>
-      <width>190</width>
+      <width>191</width>
       <height>50</height>
      </rect>
     </property>
@@ -77,22 +79,27 @@
      <rect>
       <x>0</x>
       <y>160</y>
-      <width>190</width>
+      <width>191</width>
       <height>50</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <pointsize>18</pointsize>
+     </font>
+    </property>
     <property name="text">
-     <string>PushButton</string>
+     <string>Clear Meassage</string>
     </property>
    </widget>
   </widget>
   <widget class="QGroupBox" name="groupBox_2">
    <property name="geometry">
     <rect>
-     <x>320</x>
-     <y>40</y>
-     <width>250</width>
-     <height>400</height>
+     <x>300</x>
+     <y>10</y>
+     <width>281</width>
+     <height>451</height>
     </rect>
    </property>
    <property name="font">
@@ -109,26 +116,26 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>290</y>
-      <width>190</width>
-      <height>51</height>
+      <y>300</y>
+      <width>140</width>
+      <height>30</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>20</pointsize>
+      <pointsize>15</pointsize>
       <weight>75</weight>
       <bold>true</bold>
      </font>
     </property>
     <property name="text">
-     <string>Song status:</string>
+     <string>Track status:</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_2">
     <property name="geometry">
      <rect>
-      <x>159</x>
+      <x>190</x>
       <y>250</y>
       <width>81</width>
       <height>50</height>
@@ -142,7 +149,7 @@
      </font>
     </property>
     <property name="text">
-     <string>On</string>
+     <string>OFF</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_4">
@@ -156,7 +163,7 @@
     </property>
     <property name="font">
      <font>
-      <pointsize>20</pointsize>
+      <pointsize>15</pointsize>
       <weight>75</weight>
       <bold>true</bold>
      </font>
@@ -180,7 +187,7 @@
      <rect>
       <x>0</x>
       <y>30</y>
-      <width>250</width>
+      <width>291</width>
       <height>210</height>
      </rect>
     </property>
@@ -205,33 +212,120 @@
      <string/>
     </property>
     <property name="pixmap">
-     <pixmap>diningroom.png</pixmap>
+     <pixmap>images/diningroom.png</pixmap>
     </property>
     <property name="scaledContents">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-  </widget>
-  <widget class="QTextBrowser" name="textBrowser">
-   <property name="geometry">
-    <rect>
-     <x>600</x>
-     <y>280</y>
-     <width>191</width>
-     <height>161</height>
-    </rect>
-   </property>
+   <widget class="QLabel" name="music_label_status_2">
+    <property name="geometry">
+     <rect>
+      <x>170</x>
+      <y>300</y>
+      <width>120</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>15</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_8">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>380</y>
+      <width>120</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>15</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Track:</string>
+    </property>
+   </widget>
+   <widget class="QLCDNumber" name="lcdNumber_2">
+    <property name="geometry">
+     <rect>
+      <x>160</x>
+      <y>330</y>
+      <width>111</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="lineWidth">
+     <number>0</number>
+    </property>
+    <property name="segmentStyle">
+     <enum>QLCDNumber::Flat</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_10">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>340</y>
+      <width>120</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>15</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Volume:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="music_track_name_label_2">
+    <property name="geometry">
+     <rect>
+      <x>100</x>
+      <y>380</y>
+      <width>181</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>15</pointsize>
+      <weight>50</weight>
+      <italic>true</italic>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
   </widget>
   <widget class="QGroupBox" name="groupBox">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>40</y>
-     <width>250</width>
-     <height>400</height>
+     <x>10</x>
+     <y>10</y>
+     <width>281</width>
+     <height>451</height>
     </rect>
    </property>
    <property name="font">
@@ -248,26 +342,26 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>290</y>
-      <width>190</width>
-      <height>51</height>
+      <y>300</y>
+      <width>140</width>
+      <height>30</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>20</pointsize>
+      <pointsize>15</pointsize>
       <weight>75</weight>
       <bold>true</bold>
      </font>
     </property>
     <property name="text">
-     <string>Song status:</string>
+     <string>Track status:</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton">
     <property name="geometry">
      <rect>
-      <x>159</x>
+      <x>190</x>
       <y>250</y>
       <width>81</width>
       <height>50</height>
@@ -281,7 +375,7 @@
      </font>
     </property>
     <property name="text">
-     <string>On</string>
+     <string>OFF</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_2">
@@ -295,7 +389,7 @@
     </property>
     <property name="font">
      <font>
-      <pointsize>20</pointsize>
+      <pointsize>15</pointsize>
       <weight>75</weight>
       <bold>true</bold>
      </font>
@@ -309,7 +403,7 @@
      <rect>
       <x>0</x>
       <y>30</y>
-      <width>250</width>
+      <width>281</width>
       <height>210</height>
      </rect>
     </property>
@@ -317,10 +411,10 @@
      <string/>
     </property>
     <property name="pixmap">
-     <pixmap>bedroom.png</pixmap>
+     <pixmap>images/bedroom.png</pixmap>
     </property>
     <property name="scaledContents">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
@@ -329,6 +423,118 @@
      <number>0</number>
     </property>
    </widget>
+   <widget class="QLabel" name="music_label_status">
+    <property name="geometry">
+     <rect>
+      <x>170</x>
+      <y>300</y>
+      <width>120</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>15</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string> </string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_7">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>380</y>
+      <width>120</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>15</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Track:</string>
+    </property>
+   </widget>
+   <widget class="QLCDNumber" name="lcdNumber">
+    <property name="geometry">
+     <rect>
+      <x>170</x>
+      <y>330</y>
+      <width>111</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <strikeout>false</strikeout>
+     </font>
+    </property>
+    <property name="lineWidth">
+     <number>0</number>
+    </property>
+    <property name="segmentStyle">
+     <enum>QLCDNumber::Flat</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_9">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>340</y>
+      <width>120</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>15</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Volume:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="music_track_name_label">
+    <property name="geometry">
+     <rect>
+      <x>100</x>
+      <y>380</y>
+      <width>181</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>15</pointsize>
+      <weight>50</weight>
+      <italic>true</italic>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string> </string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QTextEdit" name="textEdit">
+   <property name="geometry">
+    <rect>
+     <x>590</x>
+     <y>270</y>
+     <width>191</width>
+     <height>191</height>
+    </rect>
+   </property>
   </widget>
  </widget>
  <resources/>

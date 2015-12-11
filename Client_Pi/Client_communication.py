@@ -14,6 +14,7 @@ import socket, pika, uuid, json
 #                                 'target': 'Room1'}
 
 #Client_Communication class will handle the connection between Controller_pi and Client_pi
+CENTRAL_IP = '10.0.0.16'
 class Client_Communication(object):
     def __init__(self):
         self.Controller_Connected = False
@@ -29,7 +30,7 @@ class Client_Communication(object):
         # if binfo is not None:
         #     print "Controller host is ", binfo.bhost
         #     print "Controller proper is ", binfo.bproper
-            self.Controller = ControllerMQ('172.31.174.131')#binfo.bhost)
+            self.Controller = ControllerMQ(CENTRAL_IP)#binfo.bhost)
             self.Controller_Connected = True
         # else:
         #     print 'Did not found Controller pi!'
@@ -102,5 +103,5 @@ test = Client_Communication()
 print test.Controller.call(json.dumps({'sender': 'Client',
                                        'userID': 'icer',
                                        'device': 'MusicPlayer',
-                                       'action': 'PLAY',
+                                       'action': 'PAUSE',
                                        'target': ''}))

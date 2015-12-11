@@ -1,5 +1,5 @@
 #This is a controller GUI Program
-import socket, pika, json, uuid, threading
+import socket, pika, json, uuid, threading, time
 #Uncomment the next line to enable GUI import
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QThread, QPointF, QTimer
 import sys
@@ -9,18 +9,37 @@ from zeroconf import *
 
 
 #--------------------------------------------------------------------------------
-HOST_IP = '172.31.174.131'
+ROOM1_IP = '10.0.0.14'
+ROOM2_IP = '10.0.0.29'
+CENTRAL_IP = '10.0.0.12'
 
 class ControllerCommunication(QObject):
 
-    led = pyqtSignal(str)
+    Room1_led = pyqtSignal(str)
+    Room2_led = pyqtSignal(str)
+
+    Room1_music_status = pyqtSignal(str)
+    Room2_music_status = pyqtSignal(str)
+
+    Room1_music_track_name = pyqtSignal(str)
+    Room2_music_track_name = pyqtSignal(str)
+
+    Room1_music_volume = pyqtSignal(int)
+    Room2_music_volume = pyqtSignal(int)
+
+    # Room1_led_On_Msg = pyqtSignal()
+    # Room2_led_On_Msg = pyqtSignal()
+    #
+    # Room1_led_Off_Msg = pyqtSignal()
+    # Room2_led_Off_Msg = pyqtSignal()
 
     def __init__(self):
         super(ControllerCommunication, self).__init__()
         self.Room1_Connected = False
         self.Room2_Connected = False
-        self.currentRoom = ""
+        self.currentRoom = ''
         #self.startControlService()
+        self.test_Control_Client_queue()
         self.connectControl_ClientMQ()
         self.connectControl_RoomMQ()
         self.connect_room()
@@ -44,11 +63,14 @@ class ControllerCommunication(QObject):
         self.zeroconf.close()
 
     def connect_room(self):
-        print "test Room zeroconfig"
-        zeroconf = Zeroconf()
-        self.room1 = RoomMQ('172.30.39.27')
+        #print "test Room zeroconfig"
+        #zeroconf = Zeroconf()
+        self.room1 = RoomMQ(ROOM1_IP)
         self.Room1_Connected = True
         print 'room1 connected:', self.Room1_Connected
+        self.room2 = RoomMQ(ROOM2_IP)
+        self.Room2_Connected = True
+        print 'room2 connected:', self.Room2_Connected
         # listener1 = MyListener_Room('Room1')
         # binfo1 = listener1.add_service(zeroconf,"_http._tcp.local.","Room_http._tcp.local.")
         # #connect room1
@@ -78,71 +100,104 @@ class ControllerCommunication(QObject):
         #     print 'Did not found Room2 pi!'
 
     #This function will handle all the message analysis
-    def messageHandler(self,message):
+    def messageHandler(self, message):
         processMSG = json.loads(message)
+        print 'current room is: ',self.currentRoom
         if processMSG['sender'] == 'Client':
             print "send message to Room"
             if processMSG['target'] == '':
                 print " send to current Room"
-                self.room1.call(message)
+                if self.currentRoom == '':
+                    print 'there is no current room'
+                elif self.currentRoom == 'Room1':
+                    self.room1.call(message)
+                elif self.currentRoom == 'Room2':
+                    self.room2.call(message)
                 return 'already send message to current Room'
-                # if self.currentRoom == 'Room1':
-                #     self.room1.call(message)
-                # elif self.currentRoom == 'Room2':
-                #     self.room2.call(message)
             else:
-                print " send to target Room"
+                print "send to target Room"
                 if processMSG['target'] == 'Room1':
                     return self.room1.call(message)
                 elif processMSG['target'] == 'Room2':
                     return self.room2.call(message)
         elif processMSG['sender'] == 'Room':
-            if (processMSG['device'] == 'LED'):
+            if processMSG['device'] == 'LED':
                 print "emit a LED signal to GUI"
-                if(processMSG['LEDStatus'] == 'ON'):
-                    self.currentRoom = 'Room1'
-                    self.led.emit(str('ON'))
+                if processMSG['LEDStatus'] == 'ON':
+                    if processMSG['RoomID'] == 'Room1':
+                        self.currentRoom = 'Room1'
+                        self.Room1_led.emit(str('ON'))
+                        #self.Room1_led_On_Msg.emit()
+                    elif processMSG['RoomID'] == 'Room2':
+                        self.currentRoom = 'Room2'
+                        self.Room2_led.emit(str('ON'))
+                        #self.Room2_led_On_Msg.emit()
                 else:
                     self.currentRoom = ''
-                    self.led.emit(str('OFF'))
+                    if processMSG['RoomID'] == 'Room1':
+                        self.Room1_led.emit(str('OFF'))
+                        #self.Room1_led_Off_Msg.emit()
+                    elif processMSG['RoomID'] == 'Room2':
+                        self.Room2_led.emit(str('OFF'))
+                        #self.Room2_led_Off_Msg.emit()
             else:
                 print "emit a MusicPlayer signal to GUI"
+                if processMSG['RoomID'] == 'Room1':
+                    self.Room1_music_status.emit(processMSG['TrackStatus'])
+                    self.Room1_music_track_name.emit(processMSG['Track'])
+                    self.Room1_music_volume.emit(processMSG['volume'])
+                elif processMSG['RoomID'] == 'Room2':
+                    self.Room2_music_status.emit(processMSG['TrackStatus'])
+                    self.Room2_music_track_name.emit(processMSG['Track'])
+                    self.Room2_music_volume.emit(processMSG['volume'])
             return "got message form Room"
+        else:
+            return
 
     def connectControl_ClientMQ(self):
         #connect Controller GUI to RabbitMQ
-        self.connection0 = pika.BlockingConnection(pika.ConnectionParameters(host=HOST_IP))
+        self.connection0 = pika.BlockingConnection(pika.ConnectionParameters(host=CENTRAL_IP))
         self.channel0 = self.connection0.channel()
         self.channel0.queue_declare(queue='Control_Client_queue')#declare queue name as control_queue
         self.channel0.basic_qos(prefetch_count=1)
-        self.channel0.basic_consume(self.on_request_Client, queue='Control_Client_queue')
+        self.channel0.basic_consume(self.on_request_Client, queue='Control_Client_queue', no_ack = True)
 
     def on_request_Client(self, ch, method, props, body):
         n = body
-        response = self.messageHandler(n)
-        print "Recive information from Room_Pi: %s"  % (n,)
+        print self.messageHandler(n)
+        print "Recive information from Client_Pi: %s"  % (n,)
 
-        ch.basic_publish(exchange='',
-                    routing_key=props.reply_to,
-                    properties=pika.BasicProperties(correlation_id = \
-                                                       props.correlation_id),
-                    body=str(response))
-        ch.basic_ack(delivery_tag = method.delivery_tag)
 
     def connectControl_RoomMQ(self):
         #connect Controller GUI to RabbitMQ
-        self.connection1 = pika.BlockingConnection(pika.ConnectionParameters(host=HOST_IP))
+        self.connection1 = pika.BlockingConnection(pika.ConnectionParameters(host=CENTRAL_IP))
         self.channel1 = self.connection1.channel()
         self.channel1.queue_declare(queue='Control_Room_queue')#declare queue name as control_queue
         self.channel1.basic_qos(prefetch_count=1)
-        self.channel1.basic_consume(self.on_request_Room, queue='Control_Room_queue',no_ack=True)
+        self.channel1.basic_consume(self.on_request_Room, queue='Control_Room_queue', no_ack = True)
 
-    def on_request_Room(self,ch, method, props, body):
+    def on_request_Room(self, ch, method, props, body):
         n = body
         print self.messageHandler(n)
         print "Recive information from Room_Pi: %s"  % (n,)
 
+    def test_Control_Client_queue(self):
+        self.fake = pika.BlockingConnection(pika.ConnectionParameters(host=CENTRAL_IP))
+        self.fakech = self.fake.channel()
+        self.fakech.queue_declare(queue='Control_Client_queue')
+
+
+    def sendfakedata(self):
+        while True:
+            time.sleep(2)
+            self.fakech.basic_publish(exchange='',
+                               routing_key='Control_Client_queue',
+                               body=json.dumps({'sender': 'fake'}))
+
     def _consumingThread_(self):
+        # t = threading.Thread(target=self.sendfakedata)
+        # t.daemon = True
+        # t.start()
         t0 = threading.Thread(target=self.channel0.start_consuming)
         t0.daemon = True
         t0.start()
