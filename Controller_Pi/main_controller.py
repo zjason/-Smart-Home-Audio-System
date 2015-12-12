@@ -34,6 +34,7 @@ class MainController(QObject):
         self.ControllerCommunication.Room1_music_volume.connect(self.update_room1_volume)
         self.ControllerCommunication.Room2_music_volume.connect(self.update_room2_volume)
 
+
         self.mainWidget.ui.pushButton_5.clicked.connect(self.clear_text)
 
     """

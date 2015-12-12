@@ -27,6 +27,10 @@ class ControllerCommunication(QObject):
     Room1_music_volume = pyqtSignal(int)
     Room2_music_volume = pyqtSignal(int)
 
+    Current_room = pyqtSignal(str)
+
+    Client_msg = pyqtSignal(str)
+
     # Room1_led_On_Msg = pyqtSignal()
     # Room2_led_On_Msg = pyqtSignal()
     #
@@ -103,6 +107,7 @@ class ControllerCommunication(QObject):
     def messageHandler(self, message):
         processMSG = json.loads(message)
         print 'current room is: ',self.currentRoom
+        self.Client_msg.emit(str(message))
         if processMSG['sender'] == 'Client':
             print "send message to Room"
             if processMSG['target'] == '':
@@ -132,8 +137,10 @@ class ControllerCommunication(QObject):
                         self.currentRoom = 'Room2'
                         self.Room2_led.emit(str('ON'))
                         #self.Room2_led_On_Msg.emit()
+                    self.Current_room.emit(str('Current Room:',self.Current_room))
                 else:
                     self.currentRoom = ''
+                    self.Current_room.emit(str('Current Room:',self.Current_room))
                     if processMSG['RoomID'] == 'Room1':
                         self.Room1_led.emit(str('OFF'))
                         #self.Room1_led_Off_Msg.emit()
